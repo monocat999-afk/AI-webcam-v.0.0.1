@@ -1,0 +1,24 @@
+/* Custom Scrollbar for the Classes List */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1e293b; 
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #475569; 
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #06b6d4; 
+}
+
+/* Prevent text selection on buttons while holding to capture */
+button {
+    -webkit-user-select: none;
+    user-select: none;
+}

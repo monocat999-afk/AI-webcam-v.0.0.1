@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Vision Studio Pro</title>
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Tailwind CSS (CDN for quick styling) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 1. Unified TensorFlow.js (Includes Core, Converter, CPU, and WebGL backends) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <!-- 2. WASM Backend (Optional, for CPU fallback) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@latest"></script>
+    
+    <!-- 3. Pretrained Models -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/knn-classifier@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@latest"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8 flex flex-col items-center font-sans">
+    
+    <div class="max-w-5xl w-full bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
+        <!-- Header -->
+        <div class="bg-slate-900/50 p-4 border-b border-slate-700 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-cyan-400 flex items-center gap-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                AI Vision Studio Pro
+            </h1>
+            <div class="flex items-center gap-3">
+                <label class="text-xs text-slate-400 font-medium hidden md:block">Engine:</label>
+                <select id="backend-select" class="bg-slate-800 text-cyan-400 text-sm font-mono px-2 py-1 rounded border border-slate-600 focus:outline-none">
+                    <option value="webgl">WebGL (GPU)</option>
+                    <option value="wasm">WASM (CPU)</option>
+                    <option value="cpu">CPU (Basic)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Notification Banner -->
+        <div id="status-banner" class="hidden px-4 py-2 text-sm font-bold text-center transition-all"></div>
+
+        <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Video & Live Prediction -->
+            <div class="flex flex-col gap-4">
+                <div class="relative w-full aspect-[4/3] bg-black rounded-xl overflow-hidden border-2 border-slate-600 shadow-inner group">
+                    <video id="webcam" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover transform -scale-x-100"></video>
+                    <canvas id="canvas-overlay" class="absolute inset-0 w-full h-full pointer-events-none transform -scale-x-100"></canvas>
+                    
+                    <div id="camera-loading" class="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center gap-4 z-10 transition-opacity duration-500">
+                        <div class="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+                        <p class="text-slate-300 font-medium animate-pulse">Initializing Neural Engines...</p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-700 text-center relative overflow-hidden">
+                    <p class="text-xs uppercase tracking-widest text-slate-400 mb-1">Target Classification</p>
+                    <h2 id="prediction-text" class="text-2xl font-bold text-cyan-400 truncate">Awaiting Model...</h2>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex flex-col gap-4">
+                <!-- Data Management -->
+                <div class="bg-slate-900/50 p-5 rounded-xl border border-slate-700">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300 mb-3">Dataset Storage</h3>
+                    <div class="flex gap-3">
+                        <button id="export-btn" class="flex-1 bg-slate-800 border border-slate-600 hover:border-emerald-500 text-slate-200 py-2.5 rounded-lg text-sm font-semibold transition-all">
+                            Save Model (.json)
+                        </button>
+                        <label class="flex-1 bg-slate-800 border border-slate-600 hover:border-purple-500 text-slate-200 text-center py-2.5 rounded-lg text-sm font-semibold cursor-pointer transition-all">
+                            Load Model
+                            <input type="file" id="import-input" accept=".json" class="hidden">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Class Management -->
+                <div class="bg-slate-900/50 p-5 rounded-xl border border-slate-700 flex-1 flex flex-col">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300 mb-3">Training Classes</h3>
+                    
+                    <form id="add-class-form" class="flex gap-2 mb-4">
+                        <input type="text" id="new-class-name" placeholder="E.g., My Coffee Mug" required class="flex-1 bg-slate-800 text-slate-100 px-3 py-2 rounded-lg border border-slate-600 text-sm focus:outline-none">
+                        <button type="submit" class="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-lg text-sm font-semibold">Add</button>
+                    </form>
+                    
+                    <div id="classes-list" class="space-y-3 overflow-y-auto pr-1 flex-1 min-h-[200px]">
+                        <!-- Dynamic classes go here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- External JavaScript using defer (loads after HTML) -->
+    <script src="app.js" defer></script>
+</body>
+</html>
