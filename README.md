@@ -14,4 +14,4 @@ how to run
 ================================================================
 double click start.bat
 and it will auto run cmd and open website(on only your computer)
-if not you just use 'https://8000'
+if not you just use 'https://8000:'
